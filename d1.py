@@ -14,7 +14,6 @@ try:
     WORD_AVAILABLE = True
 except ImportError:
     WORD_AVAILABLE = False
-    st.warning("Для сохранения в Word установите: pip install python-docx")
 
 YC_FOLDER_ID = "b1gpkc6pomiofp2jdg6v"
 YC_API_KEY = "AQVN1Ps2I3v57RaWKVdxHKE9qb176s55cOfqyIiP"
