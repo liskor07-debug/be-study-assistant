@@ -1274,7 +1274,7 @@ if run_button:
             else:
                 st.info(f"Используется ручной ввод: CV={manual_cv}%, T½={manual_thalf} ч, Tmax={tmax_hours} ч")
             if studies:
-                with st.expander(f"Найдено исследований: {len(studies)}", key="studies_expander"):
+                with st.expander(f"Найдено исследований: {len(studies)}"):
                     for i, s in enumerate(studies, 1):
                         if not isinstance(s, dict):
                             st.write(f"{i}. {s} (некорректный формат)")
@@ -1293,7 +1293,7 @@ if run_button:
                             if pl:
                                 st.write(f" Параметры: {', '.join(pl)}")
                         if s.get('abstract'):
-                            with st.expander("Аннотация", key=f"abstract_{i}_{s.get('pmid', i)}"):
+                            with st.expander("Аннотация"):
                                 st.write(s['abstract'])
                         st.write("---")
         else:
