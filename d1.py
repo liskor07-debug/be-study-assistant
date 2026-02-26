@@ -1278,8 +1278,8 @@ if run_button:
                     for i, s in enumerate(studies, 1):
                         try:
                             if not isinstance(s, dict):
-                            st.warning(f"Запись {i}: некорректный формат")
-                            continue
+                                st.warning(f"Запись {i}: некорректный формат")
+                                continue
                 
                         st.markdown(f"**{i}. {s.get('title', s.get('name', 'Без названия'))}**")
                         if s.get('journal'):
