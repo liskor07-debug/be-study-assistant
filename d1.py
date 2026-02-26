@@ -1293,7 +1293,7 @@ if run_button:
                             if pl:
                                 st.write(f" Параметры: {', '.join(pl)}")
                         if s.get('abstract'):
-                            with st.expander("Аннотация"):
+                            with st.expander("Аннотация", key=f"abstract_{i}_{s.get('pmid', i)}"):
                                 st.write(s['abstract'])
                         st.write("---")
         else:
