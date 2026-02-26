@@ -1257,42 +1257,40 @@ if run_button:
                 st.success(f"Найдены параметры: {', '.join(found_params)}")
             else:
                 st.info(f"Используется ручной ввод: CV={manual_cv}%, T½={manual_thalf} ч, Tmax={tmax_hours} ч")
-            
-            # ✅ ИСПРАВЛЕННЫЙ БЛОК ОТОБРАЖЕНИЯ ИССЛЕДОВАНИЙ
             if studies and isinstance(studies, list) and len(studies) > 0:
                 with st.expander(f"📚 Найдено исследований: {len(studies)}", expanded=False):
                     for i, s in enumerate(studies, 1):
                         try:
                             if not isinstance(s, dict):
-                                st.warning(f"❌ Запись {i}: некорректный формат")
+                                st.warning(f"Запись {i}: некорректный формат")
                                 continue
                             
                             st.markdown(f"**{i}. {s.get('title', s.get('name', 'Без названия'))}**")
                             
                             if s.get('journal'):
-                                st.write(f"📖 {s['journal']} ({s.get('year', '')})")
+                                st.write(f"{s['journal']} ({s.get('year', '')})")
                             if s.get('authors'):
-                                st.write(f"👤 {s['authors']}")
+                                st.write(f"{s['authors']}")
                             if s.get('url'):
-                                st.markdown(f"🔗 [Ссылка]({s['url']})")
+                                st.markdown(f"[Ссылка]({s['url']})")
                             if s.get('instruction_url'):
-                                st.markdown(f"📄 [Инструкция]({s['instruction_url']})")
+                                st.markdown(f"[Инструкция]({s['instruction_url']})")
                             if s.get('extracted_params'):
                                 pl = [f"{k.upper()}={v}" for k, v in s['extracted_params'].items() if v]
                                 if pl:
-                                    st.write(f"📊 Параметры: {', '.join(pl)}")
+                                    st.write(f"Параметры: {', '.join(pl)}")
                             if s.get('abstract'):
                                 abstract_text = s['abstract']
                                 if len(abstract_text) > 500:
                                     abstract_text = abstract_text[:500] + "..."
-                                with st.expander("📝 Аннотация", key=f"abstract_{i}_{hash(str(s.get('title', ''))) % 10000}"):
+                                with st.expander("Аннотация", key=f"abstract_{i}_{hash(str(s.get('title', ''))) % 10000}"):
                                     st.write(abstract_text)
                             
                             st.divider()
                         except Exception as e:
-                            st.warning(f"⚠️ Ошибка обработки записи {i}: {str(e)[:100]}")
+                            st.warning(f"Ошибка обработки записи {i}: {str(e)[:100]}")
             elif studies:
-                st.info("ℹ️ Исследования найдены, но формат данных некорректен")
+                st.info("Исследования найдены, но формат данных некорректен")
         else:
             cv = manual_cv / 100
             t_half = manual_thalf
