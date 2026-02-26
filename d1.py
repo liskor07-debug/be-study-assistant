@@ -1273,8 +1273,8 @@ if run_button:
                 st.success(f"Найдены параметры: {', '.join(found_params)}")
             else:
                 st.info(f"Используется ручной ввод: CV={manual_cv}%, T½={manual_thalf} ч, Tmax={tmax_hours} ч")
-            if studies:
-                with st.expander(f"Найдено исследований: {len(studies)}"):
+            if studies and isinstance(studies, list) and len(studies) > 0:
+                with st.expander(f"Найдено исследований: {len(studies)}", expanded=False, key="studies_expander"):
                     for i, s in enumerate(studies, 1):
                         if not isinstance(s, dict):
                             st.write(f"{i}. {s} (некорректный формат)")
