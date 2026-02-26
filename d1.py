@@ -219,6 +219,17 @@ tmax — время достижения Cmax (В ЧАСАХ!)
                                 num = re.search(r'(\d+\.?\d*)', val)
                                 if num:
                                     res[key] = float(num.group(1))
+                
+                # ✅ ФИЛЬТРАЦИЯ ОТРИЦАТЕЛЬНЫХ ЗНАЧЕНИЙ
+                for key in res:
+                    if res[key] is not None:
+                        if key in ['cmax', 'auc'] and res[key] < 0:
+                            st.warning(f"⚠️ Отрицательное {key}={res[key]} отклонено (источник: {source})")
+                            res[key] = None
+                        elif key in ['cv_intra', 't_half', 'tmax'] and res[key] <= 0:
+                            st.warning(f"⚠️ Неположительное {key}={res[key]} отклонено (источник: {source})")
+                            res[key] = None
+                
                 return res
         except Exception as e:
             st.warning(f"Ошибка разбора JSON от Yandex GPT: {e}")
@@ -300,9 +311,12 @@ def fetch_pk_data_pubmed(inn):
                                     "abstract": abstract[:300] + "..." if len(abstract) > 300 else abstract
                                 }
                                 for k in collected:
-                                    if extracted.get(k):
-                                        collected[k].append(extracted[k])
-                                        st.write(f"Найден {k}: {extracted[k]}")
+                                    val = extracted.get(k)
+                                    if val is not None and val > 0:  # ✅ Фильтр отрицательных
+                                        collected[k].append(val)
+                                        st.write(f"Найден {k}: {val}")
+                                    elif val is not None:
+                                        st.warning(f"⚠️ PubMed: Отклонено {k}={val}")
                                 studies.append(study_info)
                         except Exception as e:
                             st.warning(f"Ошибка обработки статьи: {e}")
@@ -370,9 +384,12 @@ def fetch_pk_data_grls(inn):
                                     "instruction_url": instr_url, "source": "ГРЛС", "extracted_params": extracted
                                 }
                                 for k in collected:
-                                    if extracted.get(k):
-                                        collected[k].append(extracted[k])
-                                        st.write(f"Найден {k}: {extracted[k]}")
+                                    val = extracted.get(k)
+                                    if val is not None and val > 0:  # ✅ Фильтр отрицательных
+                                        collected[k].append(val)
+                                        st.write(f"Найден {k}: {val}")
+                                    elif val is not None:
+                                        st.warning(f"⚠️ ГРЛС: Отклонено {k}={val}")
                                 studies.append(study_info)
                     except Exception as e:
                         st.warning(f"Ошибка при парсинге страницы ГРЛС: {e}")
@@ -424,8 +441,11 @@ def fetch_pk_data_drugbank(inn):
                                 extracted = extract_pk_params_from_text(pk_text, inn, "DrugBank")
                                 study_info = {"name": name, "url": drug_url, "source": "DrugBank", "extracted_params": extracted}
                                 for k in collected:
-                                    if extracted.get(k):
-                                        collected[k].append(extracted[k])
+                                    val = extracted.get(k)
+                                    if val is not None and val > 0:  # ✅ Фильтр отрицательных
+                                        collected[k].append(val)
+                                    elif val is not None:
+                                        st.warning(f"⚠️ DrugBank: Отклонено {k}={val}")
                                 studies.append(study_info)
                                 break
                     except:
@@ -503,7 +523,11 @@ def fetch_pk_data_pkdb(inn):
                 val = item.get(key) or pk_params.get(key)
                 if val is not None:
                     try:
-                        params[key].append(float(val))
+                        float_val = float(val)
+                        if float_val > 0:  # ✅ Фильтр отрицательных
+                            params[key].append(float_val)
+                        else:
+                            st.warning(f"⚠️ PK-DB: Отклонено {key}={float_val}")
                     except (ValueError, TypeError):
                         pass
 
@@ -533,7 +557,11 @@ def fetch_pk_data_pkdb(inn):
                 val = pk.get(key)
                 if val is not None:
                     try:
-                        params[key].append(float(val))
+                        float_val = float(val)
+                        if float_val > 0:  # ✅ Фильтр отрицательных
+                            params[key].append(float_val)
+                        else:
+                            st.warning(f"⚠️ PK-DB: Отклонено {key}={float_val}")
                     except (ValueError, TypeError):
                         pass
 
@@ -552,7 +580,11 @@ def fetch_pk_data_pkdb(inn):
                 val = metadata.get(key)
                 if val is not None:
                     try:
-                        params[key].append(float(val))
+                        float_val = float(val)
+                        if float_val > 0:  # ✅ Фильтр отрицательных
+                            params[key].append(float_val)
+                        else:
+                            st.warning(f"⚠️ PK-DB: Отклонено {key}={float_val}")
                     except (ValueError, TypeError):
                         pass
 
@@ -567,7 +599,11 @@ def fetch_pk_data_pkdb(inn):
                 val = stats.get(key) or stats.get(f"{key}_mean") or stats.get(f"{key}_median")
                 if val is not None:
                     try:
-                        params[key].append(float(val))
+                        float_val = float(val)
+                        if float_val > 0:  # ✅ Фильтр отрицательных
+                            params[key].append(float_val)
+                        else:
+                            st.warning(f"⚠️ PK-DB: Отклонено {key}={float_val}")
                     except (ValueError, TypeError):
                         pass
 
@@ -655,13 +691,18 @@ def fetch_pk_data_all(inn, use_pubmed=True, use_grls=True, use_drugbank=True, us
     for k in param_keys:
         if aggregated[k]:
             vals = aggregated[k]
-            if len(vals) > 1:
-                mean = sum(vals) / len(vals)
-                std = (sum((x - mean) ** 2 for x in vals) / len(vals)) ** 0.5
-                filtered = [x for x in vals if abs(x - mean) <= 3 * std]
-                result[k] = sum(filtered) / len(filtered) if filtered else mean
+            # ✅ Фильтр отрицательных и None значений перед усреднением
+            valid_vals = [v for v in vals if v is not None and v > 0]
+            if valid_vals:
+                if len(valid_vals) > 1:
+                    mean = sum(valid_vals) / len(valid_vals)
+                    std = (sum((x - mean) ** 2 for x in valid_vals) / len(valid_vals)) ** 0.5
+                    filtered = [x for x in valid_vals if abs(x - mean) <= 3 * std]
+                    result[k] = sum(filtered) / len(filtered) if filtered else mean
+                else:
+                    result[k] = valid_vals[0]
             else:
-                result[k] = vals[0]
+                result[k] = None
         else:
             result[k] = None
 
@@ -745,7 +786,11 @@ def choose_design(cv_intra, t_half, design_choice="автоматически", 
 
 def calculate_sample_size(design, cv_intra, target_power, alpha, theta0=0.95, use_rsabe=False, regulator="EMA (Европа)"):
     try:
+        # ✅ Защита от отрицательного CV
         if cv_intra is None or cv_intra <= 0:
+            cv_intra = 0.25
+        elif cv_intra > 2.0:  # CV > 200% тоже подозрительно
+            st.warning(f"⚠️ CV={cv_intra:.2f} слишком высокий, установлен 0.25")
             cv_intra = 0.25
         z_alpha = {0.1: 1.282, 0.05: 1.645, 0.025: 1.96, 0.01: 2.326}.get(alpha, 1.645)
         z_beta = {0.7: 0.525, 0.75: 0.675, 0.8: 0.84, 0.85: 1.04, 0.9: 1.28, 0.95: 1.645}.get(round(target_power, 2), 0.84)
@@ -1257,40 +1302,40 @@ if run_button:
                 st.success(f"Найдены параметры: {', '.join(found_params)}")
             else:
                 st.info(f"Используется ручной ввод: CV={manual_cv}%, T½={manual_thalf} ч, Tmax={tmax_hours} ч")
+            
+            # ✅ ИСПРАВЛЕННОЕ ОТОБРАЖЕНИЕ ИССЛЕДОВАНИЙ (без key параметра)
             if studies and isinstance(studies, list) and len(studies) > 0:
                 with st.expander(f"📚 Найдено исследований: {len(studies)}", expanded=False):
                     for i, s in enumerate(studies, 1):
                         try:
                             if not isinstance(s, dict):
-                                st.warning(f"Запись {i}: некорректный формат")
+                                st.warning(f"❌ Запись {i}: некорректный формат")
                                 continue
                             
                             st.markdown(f"**{i}. {s.get('title', s.get('name', 'Без названия'))}**")
                             
                             if s.get('journal'):
-                                st.write(f"{s['journal']} ({s.get('year', '')})")
+                                st.write(f"📖 {s['journal']} ({s.get('year', '')})")
                             if s.get('authors'):
-                                st.write(f"{s['authors']}")
+                                st.write(f"👤 {s['authors']}")
                             if s.get('url'):
-                                st.markdown(f"[Ссылка]({s['url']})")
+                                st.markdown(f"🔗 [Ссылка]({s['url']})")
                             if s.get('instruction_url'):
-                                st.markdown(f"[Инструкция]({s['instruction_url']})")
+                                st.markdown(f"📄 [Инструкция]({s['instruction_url']})")
                             if s.get('extracted_params'):
                                 pl = [f"{k.upper()}={v}" for k, v in s['extracted_params'].items() if v]
                                 if pl:
-                                    st.write(f"Параметры: {', '.join(pl)}")
+                                    st.write(f"📊 Параметры: {', '.join(pl)}")
                             if s.get('abstract'):
                                 abstract_text = s['abstract']
                                 if len(abstract_text) > 500:
                                     abstract_text = abstract_text[:500] + "..."
-                                with st.expander("Аннотация", key=f"abstract_{i}_{hash(str(s.get('title', ''))) % 10000}"):
+                                with st.expander(f"📝 Аннотация #{i}"):  # ✅ Уникальный label вместо key
                                     st.write(abstract_text)
                             
                             st.divider()
                         except Exception as e:
-                            st.warning(f"Ошибка обработки записи {i}: {str(e)[:100]}")
-            elif studies:
-                st.info("Исследования найдены, но формат данных некорректен")
+                            st.warning(f"⚠️ Ошибка обработки записи {i}: {str(e)[:100]}")
         else:
             cv = manual_cv / 100
             t_half = manual_thalf
